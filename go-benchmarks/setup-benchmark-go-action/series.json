@@ -7,9 +7,9 @@
       "label": "Main",
       "path": "series/main/main/history.json",
       "configPath": "series/main/main/config.json",
-      "sha": "52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
-      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
-      "updatedAt": "2026-07-30T06:07:15.696Z"
+      "sha": "b2ee4363a3e728add43bc02ed60b1d8c012eff17",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/b2ee4363a3e728add43bc02ed60b1d8c012eff17",
+      "updatedAt": "2026-07-30T16:40:08.574Z"
     }
   ]
 }
