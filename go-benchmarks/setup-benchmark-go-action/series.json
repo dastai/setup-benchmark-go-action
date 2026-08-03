@@ -10,6 +10,26 @@
       "sha": "7c7ef59fead67615c5b2422f5799b5ec2f165e14",
       "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/7c7ef59fead67615c5b2422f5799b5ec2f165e14",
       "updatedAt": "2026-08-03T06:56:52.159Z"
+    },
+    {
+      "kind": "branch",
+      "id": "87b93d9a660f812e",
+      "label": "Branch codex/commit-indexed-benchmark-data",
+      "path": "series/branch/87b93d9a660f812e/history.json",
+      "configPath": "series/branch/87b93d9a660f812e/config.json",
+      "sha": "6c740059dd1daac3bc058306fb968ceb9973c8b0",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/6c740059dd1daac3bc058306fb968ceb9973c8b0",
+      "updatedAt": "2026-08-03T11:18:56.124Z"
+    },
+    {
+      "kind": "pull",
+      "id": "4",
+      "label": "PR #4",
+      "path": "series/pull/4/history.json",
+      "configPath": "series/pull/4/config.json",
+      "sha": "6c740059dd1daac3bc058306fb968ceb9973c8b0",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/6c740059dd1daac3bc058306fb968ceb9973c8b0",
+      "updatedAt": "2026-08-03T11:18:56.122Z"
     }
   ]
 }
