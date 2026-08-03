@@ -22,6 +22,17 @@
       "updatedAt": "2026-08-03T11:18:56.124Z"
     },
     {
+      "kind": "branch",
+      "id": "0d6e4079e36703eb",
+      "label": "Branch main",
+      "path": "series/branch/0d6e4079e36703eb/summary.json",
+      "configPath": "series/branch/0d6e4079e36703eb/config.json",
+      "commitPath": "commits/ec85293a6936d70bcbc23b94176a449cd5c480d2.json",
+      "sha": "ec85293a6936d70bcbc23b94176a449cd5c480d2",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/ec85293a6936d70bcbc23b94176a449cd5c480d2",
+      "updatedAt": "2026-08-03T11:25:11.119Z"
+    },
+    {
       "kind": "pull",
       "id": "4",
       "label": "PR #4",
