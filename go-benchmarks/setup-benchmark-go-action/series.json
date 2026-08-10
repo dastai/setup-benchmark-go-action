@@ -23,6 +23,17 @@
     },
     {
       "kind": "branch",
+      "id": "aa993aee31836f4b",
+      "label": "Branch codex/release-v1.0.4",
+      "path": "series/branch/aa993aee31836f4b/summary.json",
+      "configPath": "series/branch/aa993aee31836f4b/config.json",
+      "commitPath": "commits/9c4de3cf7706dbf08274a9f2e72a60e67aed05f0.json",
+      "sha": "9c4de3cf7706dbf08274a9f2e72a60e67aed05f0",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/9c4de3cf7706dbf08274a9f2e72a60e67aed05f0",
+      "updatedAt": "2026-08-10T21:57:14.349Z"
+    },
+    {
+      "kind": "branch",
       "id": "0d6e4079e36703eb",
       "label": "Branch main",
       "path": "series/branch/0d6e4079e36703eb/summary.json",
@@ -41,6 +52,17 @@
       "sha": "6c740059dd1daac3bc058306fb968ceb9973c8b0",
       "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/6c740059dd1daac3bc058306fb968ceb9973c8b0",
       "updatedAt": "2026-08-03T11:18:56.122Z"
+    },
+    {
+      "kind": "pull",
+      "id": "5",
+      "label": "PR #5",
+      "path": "series/pull/5/summary.json",
+      "configPath": "series/pull/5/config.json",
+      "commitPath": "commits/9c4de3cf7706dbf08274a9f2e72a60e67aed05f0.json",
+      "sha": "9c4de3cf7706dbf08274a9f2e72a60e67aed05f0",
+      "sourceUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/9c4de3cf7706dbf08274a9f2e72a60e67aed05f0",
+      "updatedAt": "2026-08-10T21:57:14.344Z"
     }
   ]
 }
