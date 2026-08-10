@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "setup-benchmark-go-action",
+  "source": {
+    "repository": "xgo-dev/setup-benchmark-go-action",
+    "sha": "52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
+    "ref": "main",
+    "url": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
+    "runUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/actions/runs/30518563984",
+    "timestamp": "2026-07-30T06:06:24Z"
+  },
+  "platforms": {
+    "ubuntu-node24-amd64": {
+      "schemaVersion": 1,
+      "suiteId": "setup-benchmark-go-action",
+      "shardId": "merged",
+      "source": {
+        "repository": "xgo-dev/setup-benchmark-go-action",
+        "sha": "52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
+        "ref": "main",
+        "url": "https://github.com/xgo-dev/setup-benchmark-go-action/commit/52b0af62fa2aeb0b1b7c04d4fc8daddd7444e0ee",
+        "runUrl": "https://github.com/xgo-dev/setup-benchmark-go-action/actions/runs/30518563984",
+        "timestamp": "2026-07-30T06:06:24Z"
+      },
+      "platform": {
+        "id": "ubuntu-node24-amd64",
+        "label": "Ubuntu / amd64 / Node 24",
+        "os": "linux",
+        "arch": "amd64"
+      },
+      "units": {
+        "ns/op": {
+          "better": "lower"
+        },
+        "binary-bytes": {
+          "better": "lower",
+          "assume": "exact"
+        }
+      },
+      "benchmarks": [
+        {
+          "name": "BenchmarkGroupRules100",
+          "package": "github.com/xgo-dev/setup-benchmark-go-action",
+          "group": "grouping",
+          "chart": "group:grouping",
+          "samples": [
+            {
+              "iterations": 264,
+              "measurements": {
+                "ns/op": 226614.83
+              }
+            },
+            {
+              "iterations": 264,
+              "measurements": {
+                "ns/op": 227420.545
+              }
+            },
+            {
+              "iterations": 264,
+              "measurements": {
+                "ns/op": 221564.061
+              }
+            },
+            {
+              "iterations": 264,
+              "measurements": {
+                "ns/op": 221986.367
+              }
+            },
+            {
+              "iterations": 264,
+              "measurements": {
+                "ns/op": 222151.682
+              }
+            }
+          ],
+          "measurements": {
+            "ns/op": 222151.682
+          }
+        },
+        {
+          "name": "BenchmarkParseGoOutput40",
+          "package": "github.com/xgo-dev/setup-benchmark-go-action",
+          "group": "parsing",
+          "chart": "group:parsing",
+          "samples": [
+            {
+              "iterations": 249,
+              "measurements": {
+                "ns/op": 329470.474
+              }
+            },
+            {
+              "iterations": 249,
+              "measurements": {
+                "ns/op": 291101.301
+              }
+            },
+            {
+              "iterations": 249,
+              "measurements": {
+                "ns/op": 260504.675
+              }
+            },
+            {
+              "iterations": 249,
+              "measurements": {
+                "ns/op": 253813.076
+              }
+            },
+            {
+              "iterations": 249,
+              "measurements": {
+                "ns/op": 267781.827
+              }
+            }
+          ],
+          "measurements": {
+            "ns/op": 267781.827
+          }
+        },
+        {
+          "name": "BenchmarkRecordBundle",
+          "package": "github.com/xgo-dev/setup-benchmark-go-action",
+          "group": "bundles",
+          "chart": "benchmark:github.com/xgo-dev/setup-benchmark-go-action::BenchmarkRecordBundle",
+          "samples": [
+            {
+              "iterations": 1,
+              "measurements": {
+                "binary-bytes": 319823
+              }
+            }
+          ],
+          "measurements": {
+            "binary-bytes": 319823
+          }
+        },
+        {
+          "name": "BenchmarkRenderBundle",
+          "package": "github.com/xgo-dev/setup-benchmark-go-action",
+          "group": "bundles",
+          "chart": "benchmark:github.com/xgo-dev/setup-benchmark-go-action::BenchmarkRenderBundle",
+          "samples": [
+            {
+              "iterations": 1,
+              "measurements": {
+                "binary-bytes": 320473
+              }
+            }
+          ],
+          "measurements": {
+            "binary-bytes": 320473
+          }
+        },
+        {
+          "name": "BenchmarkValidateArtifact40",
+          "package": "github.com/xgo-dev/setup-benchmark-go-action",
+          "group": "validation",
+          "chart": "group:validation",
+          "samples": [
+            {
+              "iterations": 191,
+              "measurements": {
+                "ns/op": 330683.157
+              }
+            },
+            {
+              "iterations": 191,
+              "measurements": {
+                "ns/op": 322007.764
+              }
+            },
+            {
+              "iterations": 191,
+              "measurements": {
+                "ns/op": 367992.717
+              }
+            },
+            {
+              "iterations": 191,
+              "measurements": {
+                "ns/op": 310855.314
+              }
+            },
+            {
+              "iterations": 191,
+              "measurements": {
+                "ns/op": 298312.031
+              }
+            }
+          ],
+          "measurements": {
+            "ns/op": 322007.764
+          }
+        }
+      ]
+    }
+  }
+}
