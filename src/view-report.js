@@ -1,7 +1,20 @@
 "use strict";
 
 const { benchmarkKey } = require("./gobench");
-const { delta, formatNumber, markdown, tableCell } = require("./presentation");
+const {
+  benchmarkIndex,
+  isIndexPaired,
+  metricComparison,
+} = require("./comparison");
+const {
+  delta,
+  formatDelta,
+  formatNumber,
+  formatPreciseNumber,
+  formatSigned,
+  markdown,
+  tableCell,
+} = require("./presentation");
 const { assert, compareText } = require("./util");
 
 const dimensionTitles = {
@@ -17,22 +30,24 @@ function groupTitle(config, id) {
   return config.groups[id]?.title ?? id;
 }
 
-function baselineValue(entry, platformId, key, unit) {
-  const benchmark = entry?.platforms?.[platformId]?.benchmarks?.find(
-    (candidate) => benchmarkKey(candidate) === key,
-  );
-  return benchmark?.measurements?.[unit];
-}
-
-function observations(config, current, baseline) {
+function observations(config, current, baseline, sameRunner) {
   const values = [];
   for (const platformId of Object.keys(current.platforms).sort(compareText)) {
     const result = current.platforms[platformId];
+    const baselineResult = baseline?.platforms?.[platformId];
+    const baselineBenchmarks = benchmarkIndex(baselineResult);
+    const paired = isIndexPaired(result, baselineResult, sameRunner);
     for (const benchmark of result.benchmarks) {
       const key = benchmarkKey(benchmark);
       for (const metric of Object.keys(benchmark.measurements).sort(
         compareText,
       )) {
+        const comparison = metricComparison(
+          benchmark,
+          baselineBenchmarks.get(key),
+          metric,
+          paired,
+        );
         values.push({
           dimensions: {
             platform: { key: platformId, label: result.platform.label },
@@ -48,7 +63,7 @@ function observations(config, current, baseline) {
             metric: { key: metric, label: metric },
           },
           value: benchmark.measurements[metric],
-          baseline: baselineValue(baseline, platformId, key, metric),
+          ...comparison,
           better: result.units?.[metric]?.better,
         });
       }
@@ -85,22 +100,26 @@ function dimensionTitle(view, dimension) {
   return view.dimensionOptions[dimension]?.title ?? dimensionTitles[dimension];
 }
 
-function formatDuration(value, base) {
+function formatDuration(value, base, numberFormat = formatNumber) {
   const nanoseconds = value * { ns: 1, us: 1e3, ms: 1e6, s: 1e9 }[base];
-  if (nanoseconds >= 1e9) return `${formatNumber(nanoseconds / 1e9)} s`;
-  if (nanoseconds >= 1e6) return `${formatNumber(nanoseconds / 1e6)} ms`;
-  if (nanoseconds >= 1e3) return `${formatNumber(nanoseconds / 1e3)} us`;
-  return `${formatNumber(nanoseconds)} ns`;
+  if (nanoseconds >= 1e9) return `${numberFormat(nanoseconds / 1e9)} s`;
+  if (nanoseconds >= 1e6) return `${numberFormat(nanoseconds / 1e6)} ms`;
+  if (nanoseconds >= 1e3) return `${numberFormat(nanoseconds / 1e3)} us`;
+  return `${numberFormat(nanoseconds)} ns`;
 }
 
-function formatValue(value, metric, view) {
+function formatValue(value, metric, view, numberFormat = formatNumber) {
   const format = view.metrics[metric]?.format ?? "auto";
-  if (format === "number") return formatNumber(value);
-  if (format === "bytes") return `${formatNumber(value)} B`;
+  if (format === "number") return numberFormat(value);
+  if (format === "bytes") return `${numberFormat(value)} B`;
   if (format.startsWith("duration-")) {
-    return formatDuration(value, format.slice("duration-".length));
+    return formatDuration(
+      value,
+      format.slice("duration-".length),
+      numberFormat,
+    );
   }
-  return `${formatNumber(value)} ${metric}`;
+  return `${numberFormat(value)} ${metric}`;
 }
 
 function metricRank(view, value) {
@@ -184,9 +203,24 @@ function renderTable(items, view, comparisonLabel) {
         values.push("-", "-");
         continue;
       }
+      const percentage =
+        item.change === undefined
+          ? delta(item.value, item.baseline, item.better)
+          : formatDelta(item.change, item.better);
+      const renderedDelta =
+        item.difference === undefined
+          ? percentage
+          : `${formatSigned(item.difference, (value) =>
+              formatValue(
+                value,
+                item.dimensions.metric.key,
+                view,
+                formatPreciseNumber,
+              ),
+            )} / ${percentage}`;
       values.push(
         formatValue(item.value, item.dimensions.metric.key, view),
-        delta(item.value, item.baseline, item.better),
+        renderedDelta,
       );
     }
     lines.push(`| ${values.map(tableCell).join(" | ")} |`);
@@ -230,8 +264,14 @@ function renderView(view, allItems, comparisonLabel) {
   ];
 }
 
-function renderViews(config, current, baseline, comparisonLabel = "vs main") {
-  const items = observations(config, current, baseline);
+function renderViews(
+  config,
+  current,
+  baseline,
+  comparisonLabel = "vs main",
+  sameRunner = false,
+) {
+  const items = observations(config, current, baseline, sameRunner);
   return Object.values(config.views).flatMap((view) =>
     renderView(view, items, comparisonLabel),
   );

@@ -129,6 +129,76 @@ test("rejects a baseline recorded for a different platform", () => {
   assert.throws(() => loadArtifacts(root), /baseline platform does not match/u);
 });
 
+test("validates explicitly index-paired benchmark samples", () => {
+  const config = new Config({ id: "artifact", groups: { core: "^Core" } });
+  const current = result("paired", ["BenchmarkCore"], {
+    samplePairing: "index",
+  });
+  const baseline = result("paired", ["BenchmarkCore"], {
+    samplePairing: "index",
+  });
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "benchmark-index-pair-"));
+  writeArtifact(path.join(root, "valid"), config, current, baseline);
+
+  assert.throws(
+    () => writeArtifact(path.join(root, "missing"), config, current),
+    /requires a paired baseline/u,
+  );
+  const extraBaseline = JSON.parse(JSON.stringify(baseline));
+  extraBaseline.benchmarks[0].samples.push(
+    JSON.parse(JSON.stringify(extraBaseline.benchmarks[0].samples[0])),
+  );
+  assert.throws(
+    () =>
+      writeArtifact(
+        path.join(root, "different-count"),
+        config,
+        current,
+        extraBaseline,
+      ),
+    /sample counts differ/u,
+  );
+  assert.throws(
+    () =>
+      validateResult(
+        result("invalid", ["BenchmarkCore"], {
+          samplePairing: "adjacent",
+        }),
+        config,
+      ),
+    /invalid sample pairing/u,
+  );
+
+  const shiftedCurrent = result("paired", ["BenchmarkCore"], {
+    samplePairing: "index",
+    units: {
+      "ns/op": { better: "lower" },
+      "B/op": { better: "lower" },
+    },
+  });
+  const shiftedBaseline = JSON.parse(JSON.stringify(shiftedCurrent));
+  shiftedCurrent.benchmarks[0].samples = [
+    { iterations: 10, measurements: { "ns/op": 2 } },
+    { iterations: 10, measurements: { "B/op": 4 } },
+  ];
+  shiftedCurrent.benchmarks[0].measurements = { "ns/op": 2, "B/op": 4 };
+  shiftedBaseline.benchmarks[0].samples = [
+    { iterations: 10, measurements: { "B/op": 4 } },
+    { iterations: 10, measurements: { "ns/op": 2 } },
+  ];
+  shiftedBaseline.benchmarks[0].measurements = { "ns/op": 2, "B/op": 4 };
+  assert.throws(
+    () =>
+      writeArtifact(
+        path.join(root, "shifted-units"),
+        config,
+        shiftedCurrent,
+        shiftedBaseline,
+      ),
+    /sample 0 units differ/u,
+  );
+});
+
 test("rejects duplicate shards, benchmarks, and source SHAs", () => {
   const first = result("first", ["BenchmarkCoreA"]);
   assert.throws(

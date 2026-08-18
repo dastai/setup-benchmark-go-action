@@ -21,6 +21,9 @@ inputs:
   baseline-ref:
     description: Baseline source ref. Defaults to the pull request base ref.
     default: ""
+  sample-pairing:
+    description: Set to index when current and baseline samples are paired by occurrence.
+    default: ""
   platform-id:
     description: Stable platform ID. Defaults to GOOS-GOARCH.
     default: ""
@@ -62,6 +65,7 @@ runs:
         BENCHMARK_BASELINE_REPOSITORY: ${{ inputs.baseline-repository }}
         BENCHMARK_BASELINE_SHA: ${{ inputs.baseline-sha }}
         BENCHMARK_BASELINE_REF: ${{ inputs.baseline-ref }}
+        BENCHMARK_SAMPLE_PAIRING: ${{ inputs.sample-pairing }}
         BENCHMARK_PLATFORM_ID: ${{ inputs.platform-id }}
         BENCHMARK_PLATFORM_LABEL: ${{ inputs.platform-label }}
         BENCHMARK_SHARD_ID: ${{ inputs.shard-id }}

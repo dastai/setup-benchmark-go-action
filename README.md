@@ -428,6 +428,14 @@ measured by the same runner job. The report links the baseline commit and labels
 the comparison `vs base`. Otherwise, each metric is compared with the newest
 matching platform in `main`. If neither baseline exists, including the first
 setup PR in a new project, the report succeeds and marks every metric as `new`.
+Each comparison displays both the signed difference in the metric's unit and
+the percentage change.
+
+If the two files contain deliberately index-paired repetitions, set
+`sample-pairing: index`. The report then uses the medians of pairwise signed
+differences and percentage changes instead of differences between two independent medians.
+The recorder rejects missing benchmarks, units, or samples rather than silently
+breaking the pairing.
 
 The recorder derives baseline repository, commit, and ref from the pull request
 base. The trusted publisher requires the baseline repository to match the pull
@@ -440,6 +448,7 @@ metadata can be supplied explicitly for other events:
     config: .github/go-benchmark.yml
     benchmark-file: pr.txt
     baseline-benchmark-file: main.txt
+    sample-pairing: index
 ```
 
 Run both files in one job on the same runner. A workflow should reuse dependency
@@ -495,6 +504,7 @@ rendering errors still fail the workflow.
 | `baseline-repository`     | no       | PR base repository         | Explicit paired baseline repository.               |
 | `baseline-sha`            | no       | PR base commit             | Explicit paired baseline commit.                   |
 | `baseline-ref`            | no       | PR base ref                | Explicit paired baseline ref.                      |
+| `sample-pairing`          | no       |                            | `index` for repetitions paired by occurrence.      |
 | `platform-id`             | no       | `<goos>-<goarch>`          | Stable comparison and merge identity.              |
 | `platform-label`          | no       | derived                    | Human-readable platform name.                      |
 | `shard-id`                | no       | `GITHUB_JOB`               | Stable shard identity within a platform.           |

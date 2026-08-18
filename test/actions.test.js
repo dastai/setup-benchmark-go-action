@@ -45,6 +45,7 @@ test("record action adapter maps inputs to a validated artifact", () => {
       BENCHMARK_BASELINE_REPOSITORY: "owner/project",
       BENCHMARK_BASELINE_SHA: "6666666666666666666666666666666666666666",
       BENCHMARK_BASELINE_REF: "main",
+      BENCHMARK_SAMPLE_PAIRING: "index",
       BENCHMARK_SHARD_ID: "unit",
       GITHUB_REPOSITORY: "owner/project",
       GITHUB_SHA: "7777777777777777777777777777777777777777",
@@ -65,6 +66,12 @@ test("record action adapter maps inputs to a validated artifact", () => {
   assert.equal(
     fs.existsSync(path.join(recorded.outputDirectory, "baseline.json")),
     true,
+  );
+  assert.equal(
+    JSON.parse(
+      fs.readFileSync(path.join(recorded.outputDirectory, "result.json")),
+    ).samplePairing,
+    "index",
   );
 });
 
