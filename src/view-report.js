@@ -1,7 +1,11 @@
 "use strict";
 
 const { benchmarkKey } = require("./gobench");
-const { metricComparison } = require("./comparison");
+const {
+  benchmarkIndex,
+  isIndexPaired,
+  metricComparison,
+} = require("./comparison");
 const {
   delta,
   formatDelta,
@@ -30,18 +34,19 @@ function observations(config, current, baseline, sameRunner) {
   const values = [];
   for (const platformId of Object.keys(current.platforms).sort(compareText)) {
     const result = current.platforms[platformId];
+    const baselineResult = baseline?.platforms?.[platformId];
+    const baselineBenchmarks = benchmarkIndex(baselineResult);
+    const paired = isIndexPaired(result, baselineResult, sameRunner);
     for (const benchmark of result.benchmarks) {
       const key = benchmarkKey(benchmark);
       for (const metric of Object.keys(benchmark.measurements).sort(
         compareText,
       )) {
         const comparison = metricComparison(
-          current,
-          baseline,
-          platformId,
-          key,
+          benchmark,
+          baselineBenchmarks.get(key),
           metric,
-          sameRunner,
+          paired,
         );
         values.push({
           dimensions: {

@@ -6,7 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const { Config } = require("../src/config");
-const { formatPreciseNumber } = require("../src/presentation");
+const { formatDelta, formatPreciseNumber } = require("../src/presentation");
 const { writeReport } = require("../src/report");
 const { median } = require("../src/util");
 
@@ -53,7 +53,9 @@ function entry(value) {
 
 test("reports absolute and percentage changes from index-paired samples", () => {
   assert.equal(formatPreciseNumber(0.0004), "0.0004");
+  assert.equal(formatPreciseNumber(0.000000001), "1e-9");
   assert.equal(formatPreciseNumber(12.3456), "12.35");
+  assert.equal(formatDelta(0.004, "lower"), "+0.004% (worse)");
   const config = new Config({
     id: "paired",
     title: "Paired benchmarks",
