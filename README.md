@@ -428,12 +428,12 @@ measured by the same runner job. The report links the baseline commit and labels
 the comparison `vs base`. Otherwise, each metric is compared with the newest
 matching platform in `main`. If neither baseline exists, including the first
 setup PR in a new project, the report succeeds and marks every metric as `new`.
-Each comparison displays both the absolute difference in the metric's unit and
+Each comparison displays both the signed difference in the metric's unit and
 the percentage change.
 
 If the two files contain deliberately index-paired repetitions, set
-`sample-pairing: index`. The report then uses the medians of pairwise absolute
-and percentage changes instead of differences between two independent medians.
+`sample-pairing: index`. The report then uses the medians of pairwise signed
+differences and percentage changes instead of differences between two independent medians.
 The recorder rejects missing benchmarks, units, or samples rather than silently
 breaking the pairing.
 

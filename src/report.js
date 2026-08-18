@@ -102,7 +102,7 @@ function writeReport(
     );
     comparisonNote = `_Compared with [\`${baseline.source.sha.slice(0, 12)}\`](<${baseline.source.url}>) measured in the same runner job${
       paired
-        ? "; index-paired absolute and percentage changes are pairwise medians"
+        ? "; index-paired signed differences and percentage changes are pairwise medians"
         : ""
     }._`;
   } else if (baseline) {
