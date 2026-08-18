@@ -2,7 +2,6 @@ name: Go benchmarks
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -11,6 +10,9 @@ permissions:
 
 jobs:
   benchmark:
+    if: >-
+      github.event_name != 'push' ||
+      github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -29,3 +31,16 @@ jobs:
           benchmark-file: benchmark.txt
           platform-id: ubuntu-node24-amd64
           platform-label: Ubuntu / amd64 / Node 24
+
+  publish:
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_name == github.event.repository.default_branch
+    needs: benchmark
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/publish.yml
+    with:
+      run_id: ${{ fromJSON(github.run_id) }}
+      source_mode: current-run
