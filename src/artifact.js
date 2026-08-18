@@ -220,17 +220,6 @@ function validateResult(result, config, options = {}) {
   return result;
 }
 
-function measurementSamples(benchmark) {
-  const values = new Map();
-  for (const sample of benchmark.samples) {
-    for (const [unit, value] of Object.entries(sample.measurements)) {
-      if (!values.has(unit)) values.set(unit, []);
-      values.get(unit).push(value);
-    }
-  }
-  return values;
-}
-
 function validateSamplePairing(result, baseline) {
   if (
     result.samplePairing === undefined &&
@@ -259,17 +248,20 @@ function validateSamplePairing(result, baseline) {
       paired,
       `index-paired baseline is missing benchmark ${JSON.stringify(key)}`,
     );
-    const currentSamples = measurementSamples(benchmark);
-    const baselineSamples = measurementSamples(paired);
     assert(
-      currentSamples.size === baselineSamples.size,
-      `index-paired benchmark ${JSON.stringify(key)} unit counts differ`,
+      benchmark.samples.length === paired.samples.length,
+      `index-paired benchmark ${JSON.stringify(key)} sample counts differ`,
     );
-    for (const [unit, values] of currentSamples) {
+    for (let index = 0; index < benchmark.samples.length; index += 1) {
+      const units = Object.keys(benchmark.samples[index].measurements).toSorted(
+        compareText,
+      );
+      const pairedUnits = Object.keys(
+        paired.samples[index].measurements,
+      ).toSorted(compareText);
       assert(
-        baselineSamples.has(unit) &&
-          baselineSamples.get(unit).length === values.length,
-        `index-paired benchmark ${JSON.stringify(key)} unit ${JSON.stringify(unit)} sample counts differ`,
+        JSON.stringify(units) === JSON.stringify(pairedUnits),
+        `index-paired benchmark ${JSON.stringify(key)} sample ${index} units differ`,
       );
     }
   }

@@ -16,6 +16,10 @@ function formatNumber(value) {
 function formatPreciseNumber(value) {
   if (value === 0 || Number.isInteger(value)) return String(value);
   const magnitude = Math.abs(value);
+  if (magnitude < 0.0000001) {
+    const [coefficient, exponent] = value.toExponential(3).split("e");
+    return `${coefficient.replace(/\.?0+$/u, "")}e${exponent}`;
+  }
   const decimals =
     magnitude >= 999.95
       ? 0
@@ -42,7 +46,12 @@ function formatSigned(value, formatMagnitude) {
 }
 
 function formatDelta(change, better) {
-  const value = `${change >= 0 ? "+" : ""}${change.toFixed(1)}%`;
+  const rounded = change.toFixed(1);
+  const percentage =
+    change !== 0 && Number(rounded) === 0
+      ? formatPreciseNumber(change)
+      : rounded;
+  const value = `${change >= 0 ? "+" : ""}${percentage}%`;
   if (change === 0 || (better !== "lower" && better !== "higher")) return value;
   const improved =
     (better === "lower" && change < 0) || (better === "higher" && change > 0);

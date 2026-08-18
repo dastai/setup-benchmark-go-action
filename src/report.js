@@ -2,7 +2,11 @@
 
 const fs = require("node:fs");
 const { benchmarkKey } = require("./gobench");
-const { metricComparison } = require("./comparison");
+const {
+  benchmarkIndex,
+  isIndexPaired,
+  metricComparison,
+} = require("./comparison");
 const {
   delta,
   formatDelta,
@@ -47,6 +51,9 @@ function writeReport(
   } else {
     for (const platformId of Object.keys(current.platforms).sort(compareText)) {
       const result = current.platforms[platformId];
+      const baselineResult = baseline?.platforms?.[platformId];
+      const baselineBenchmarks = benchmarkIndex(baselineResult);
+      const paired = isIndexPaired(result, baselineResult, sameRunner);
       lines.push(
         `### ${markdown(result.platform.label)}`,
         "",
@@ -59,12 +66,10 @@ function writeReport(
         )) {
           const key = benchmarkKey(benchmark);
           const comparison = metricComparison(
-            current,
-            baseline,
-            platformId,
-            key,
+            benchmark,
+            baselineBenchmarks.get(key),
             unit,
-            sameRunner,
+            paired,
           );
           const percentage =
             comparison.change === undefined
@@ -91,8 +96,9 @@ function writeReport(
   }
   let comparisonNote;
   if (baseline && sameRunner) {
-    const paired = Object.values(current.platforms).some(
-      (result) => result.samplePairing === "index",
+    const paired = Object.entries(current.platforms).some(
+      ([platformId, result]) =>
+        isIndexPaired(result, baseline.platforms?.[platformId], sameRunner),
     );
     comparisonNote = `_Compared with [\`${baseline.source.sha.slice(0, 12)}\`](<${baseline.source.url}>) measured in the same runner job${
       paired

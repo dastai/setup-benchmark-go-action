@@ -3,9 +3,20 @@
 const { benchmarkKey } = require("./gobench");
 const { median } = require("./util");
 
-function findBenchmark(entry, platformId, key) {
-  return entry?.platforms?.[platformId]?.benchmarks?.find(
-    (candidate) => benchmarkKey(candidate) === key,
+function benchmarkIndex(result) {
+  return new Map(
+    (result?.benchmarks ?? []).map((benchmark) => [
+      benchmarkKey(benchmark),
+      benchmark,
+    ]),
+  );
+}
+
+function isIndexPaired(current, baseline, sameRunner) {
+  return (
+    sameRunner &&
+    current?.samplePairing === "index" &&
+    baseline?.samplePairing === "index"
   );
 }
 
@@ -15,18 +26,7 @@ function sampleValues(benchmark, unit) {
   );
 }
 
-function metricComparison(
-  current,
-  baseline,
-  platformId,
-  key,
-  unit,
-  sameRunner,
-) {
-  const currentResult = current.platforms[platformId];
-  const baselineResult = baseline?.platforms?.[platformId];
-  const currentBenchmark = findBenchmark(current, platformId, key);
-  const baselineBenchmark = findBenchmark(baseline, platformId, key);
+function metricComparison(currentBenchmark, baselineBenchmark, unit, paired) {
   const currentValue = currentBenchmark?.measurements?.[unit];
   const baselineValue = baselineBenchmark?.measurements?.[unit];
   const summary = {
@@ -35,13 +35,7 @@ function metricComparison(
       ? { difference: currentValue - baselineValue }
       : {}),
   };
-  if (
-    !sameRunner ||
-    currentResult?.samplePairing !== "index" ||
-    baselineResult?.samplePairing !== "index" ||
-    !currentBenchmark ||
-    !baselineBenchmark
-  ) {
+  if (!paired || !currentBenchmark || !baselineBenchmark) {
     return summary;
   }
 
@@ -72,4 +66,4 @@ function metricComparison(
   };
 }
 
-module.exports = { metricComparison };
+module.exports = { benchmarkIndex, isIndexPaired, metricComparison };
