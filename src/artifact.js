@@ -103,6 +103,10 @@ function validateResult(result, config, options = {}) {
     `invalid shard id ${JSON.stringify(result.shardId)}`,
   );
   assert(
+    result.samplePairing === undefined || result.samplePairing === "index",
+    `invalid sample pairing ${JSON.stringify(result.samplePairing)}`,
+  );
+  assert(
     /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(result.source?.repository),
     `invalid source repository ${JSON.stringify(result.source?.repository)}`,
   );
@@ -216,9 +220,65 @@ function validateResult(result, config, options = {}) {
   return result;
 }
 
+function measurementSamples(benchmark) {
+  const values = new Map();
+  for (const sample of benchmark.samples) {
+    for (const [unit, value] of Object.entries(sample.measurements)) {
+      if (!values.has(unit)) values.set(unit, []);
+      values.get(unit).push(value);
+    }
+  }
+  return values;
+}
+
+function validateSamplePairing(result, baseline) {
+  if (
+    result.samplePairing === undefined &&
+    baseline?.samplePairing === undefined
+  ) {
+    return;
+  }
+  assert(
+    result.samplePairing === "index" && baseline?.samplePairing === "index",
+    "index sample pairing requires a paired baseline",
+  );
+  const baselineBenchmarks = new Map(
+    baseline.benchmarks.map((benchmark) => [
+      benchmarkKey(benchmark),
+      benchmark,
+    ]),
+  );
+  assert(
+    result.benchmarks.length === baseline.benchmarks.length,
+    "index-paired result and baseline benchmark counts differ",
+  );
+  for (const benchmark of result.benchmarks) {
+    const key = benchmarkKey(benchmark);
+    const paired = baselineBenchmarks.get(key);
+    assert(
+      paired,
+      `index-paired baseline is missing benchmark ${JSON.stringify(key)}`,
+    );
+    const currentSamples = measurementSamples(benchmark);
+    const baselineSamples = measurementSamples(paired);
+    assert(
+      currentSamples.size === baselineSamples.size,
+      `index-paired benchmark ${JSON.stringify(key)} unit counts differ`,
+    );
+    for (const [unit, values] of currentSamples) {
+      assert(
+        baselineSamples.has(unit) &&
+          baselineSamples.get(unit).length === values.length,
+        `index-paired benchmark ${JSON.stringify(key)} unit ${JSON.stringify(unit)} sample counts differ`,
+      );
+    }
+  }
+}
+
 function writeArtifact(directory, config, result, baseline = null) {
   validateResult(result, config);
   if (baseline) validateResult(baseline, config);
+  validateSamplePairing(result, baseline);
   fs.mkdirSync(directory, { recursive: true });
   writeJSON(path.join(directory, "config.json"), config.toJSON());
   writeJSON(path.join(directory, "result.json"), result);
@@ -274,6 +334,7 @@ function loadArtifacts(root) {
           JSON.stringify(baseline.platform) === JSON.stringify(result.platform),
           `baseline platform does not match result platform ${JSON.stringify(result.platform.id)}`,
         );
+        validateSamplePairing(result, baseline);
         baselines.push(baseline);
       }
       return result;
@@ -338,6 +399,10 @@ function mergeShards(shards) {
       assert(
         JSON.stringify(platform.platform) === JSON.stringify(shard.platform),
         `platform ${shard.platform.id} metadata differs between shards`,
+      );
+      assert(
+        platform.samplePairing === shard.samplePairing,
+        `platform ${shard.platform.id} sample pairing differs between shards`,
       );
     }
     mergeMetadata(platform.units, shard.units, shard.platform.id);

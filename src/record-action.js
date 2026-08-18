@@ -35,6 +35,7 @@ function run() {
   add(args, "baseline-repository", input("baseline-repository"));
   add(args, "baseline-sha", input("baseline-sha"));
   add(args, "baseline-ref", input("baseline-ref"));
+  add(args, "sample-pairing", input("sample-pairing"));
   add(args, "platform-id", input("platform-id"));
   add(args, "platform-label", input("platform-label"));
   add(args, "shard-id", input("shard-id"));
