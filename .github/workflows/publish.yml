@@ -95,10 +95,7 @@ jobs:
             jq -r '.head_repository.full_name // .repository.full_name // ""' <<<"$run_json"
           )"
           head_sha="$(jq -r '.head_sha // ""' <<<"$run_json")"
-          if [[ "$SOURCE_MODE" == workflow-run ]] && [[ "$run_event" != pull_request ]]; then
-            echo "workflow-run publishing is limited to pull request runs" >&2
-            exit 1
-          elif [[ "$SOURCE_MODE" == current-run ]] &&
+          if [[ "$SOURCE_MODE" == current-run ]] &&
             { [[ "$run_event" != push ]] || [[ "$head_branch" != "$DEFAULT_BRANCH" ]]; }; then
             echo "current-run publishing is limited to pushes on $DEFAULT_BRANCH" >&2
             exit 1
@@ -189,8 +186,8 @@ jobs:
             id="$(printf '%s' "$HEAD_BRANCH" | sha256sum | cut -c1-16)"
             label="Branch $HEAD_BRANCH"
           fi
-          publish=false
-          [[ "$kind" != main ]] || publish=true
+          publish="$same_repository"
+          [[ "$kind" != pull ]] || publish=true
           branch_seed="$HEAD_BRANCH"
           branch_label="Branch $HEAD_BRANCH"
           if [[ "$same_repository" != true ]]; then
@@ -229,10 +226,8 @@ jobs:
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
 
-      - name: Check out trusted benchmark configuration for fork
-        if: >-
-          steps.source.outputs.kind == 'pull' &&
-          steps.source.outputs.same-repository != 'true'
+      - name: Check out trusted non-main configuration
+        if: steps.source.outputs.kind != 'main'
         uses: actions/checkout@v7
         with:
           repository: ${{ github.repository }}
@@ -242,19 +237,45 @@ jobs:
           sparse-checkout: ${{ inputs.config_path }}
           sparse-checkout-cone-mode: false
 
+      - name: Resolve trusted non-main configuration
+        id: trusted-config
+        if: steps.source.outputs.kind != 'main'
+        env:
+          CONFIG_PATH: ${{ inputs.config_path }}
+        run: |
+          set -euo pipefail
+          root="$(realpath benchmark-source)"
+          candidate="$(realpath -m "benchmark-source/$CONFIG_PATH")"
+          if [[ "$candidate" != "$root/"* ]]; then
+            echo "benchmark configuration escapes the trusted checkout" >&2
+            exit 1
+          fi
+          if [[ -f "$candidate" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check benchmark data write access
         id: data-access
         env:
           DATA_TOKEN: ${{ secrets.data_token }}
           PUBLISH: ${{ steps.source.outputs.publish }}
           SAME_DATA_REPOSITORY: ${{ steps.source.outputs.same-data-repository }}
+          SERIES_KIND: ${{ steps.source.outputs.kind }}
+          TRUSTED_CONFIG: ${{ steps.trusted-config.outputs.available }}
         run: |
           set -euo pipefail
+          publish_allowed="$PUBLISH"
+          if [[ "$SERIES_KIND" != main && "$TRUSTED_CONFIG" != true ]]; then
+            publish_allowed=false
+          fi
           writable=false
-          if [[ "$PUBLISH" == true ]] &&
+          if [[ "$publish_allowed" == true ]] &&
             [[ "$SAME_DATA_REPOSITORY" == true || -n "$DATA_TOKEN" ]]; then
             writable=true
           fi
+          echo "publish-allowed=$publish_allowed" >> "$GITHUB_OUTPUT"
           echo "writable=$writable" >> "$GITHUB_OUTPUT"
 
       - name: Check out writable benchmark data
@@ -333,7 +354,7 @@ jobs:
           artifacts: benchmark-artifacts
           data-directory: benchmark-data
           trusted-config: >-
-            ${{ steps.source.outputs.same-repository != 'true' &&
+            ${{ steps.trusted-config.outputs.available == 'true' &&
                 format('benchmark-source/{0}', inputs.config_path) || '' }}
           series-kind: ${{ steps.source.outputs.kind }}
           series-id: ${{ steps.source.outputs.id }}
@@ -342,7 +363,7 @@ jobs:
           additional-series-id: ${{ steps.source.outputs.additional-id }}
           additional-series-label: ${{ steps.source.outputs.additional-label }}
           site-base-url: >-
-            ${{ steps.source.outputs.publish == 'true' &&
+            ${{ steps.data-access.outputs.publish-allowed == 'true' &&
                 steps.pages.outputs.url || '' }}
           expected-source-repository: ${{ steps.source-run.outputs.repository }}
           expected-source-sha: ${{ steps.source-run.outputs.sha }}
@@ -444,12 +465,17 @@ jobs:
           DATA_PUBLISH_READY: ${{ steps.data-publish.outputs.ready }}
           HISTORY_LOADED: ${{ steps.preview-data.outputs.history-loaded }}
           PUBLISH: ${{ steps.source.outputs.publish }}
+          PUBLISH_ALLOWED: ${{ steps.data-access.outputs.publish-allowed }}
           WRITE_CONFIGURED: ${{ steps.data-access.outputs.writable }}
         run: |
           set -euo pipefail
           warnings=()
           if [[ "$PUBLISH" == true ]]; then
-            if [[ "$WRITE_CONFIGURED" != true ]]; then
+            if [[ "$PUBLISH_ALLOWED" != true ]]; then
+              warnings+=(
+                "Persistent publishing starts after the benchmark configuration exists on the default branch."
+              )
+            elif [[ "$WRITE_CONFIGURED" != true ]]; then
               warnings+=(
                 "Persistent publishing is unavailable because no data token is configured."
               )

@@ -1,7 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const childProcess = require("node:child_process");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const YAML = require("yaml");
@@ -27,6 +29,21 @@ const commentWorkflow = YAML.parse(
 const steps = workflow.jobs.publish.steps;
 const step = (name) => steps.find((candidate) => candidate.name === name);
 
+function runShellStep(name, env) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "workflow-step-"));
+  const output = path.join(directory, "github-output");
+  childProcess.execFileSync("bash", ["-c", step(name).run], {
+    env: { ...process.env, ...env, GITHUB_OUTPUT: output },
+  });
+  return Object.fromEntries(
+    fs
+      .readFileSync(output, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => line.split("=", 2)),
+  );
+}
+
 test("publisher exposes an optional data repository dispatch event", () => {
   const input = workflow.on.workflow_call.inputs.data_dispatch_event;
   assert.equal(input.required, undefined);
@@ -38,14 +55,12 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
   const input = workflow.on.workflow_call.inputs.source_mode;
   assert.equal(input.default, "workflow-run");
   assert.equal(input.type, "string");
+  const resolve = step("Resolve benchmark source run").run;
   assert.match(
-    step("Resolve benchmark source run").run,
-    /current-run publishing is limited to pushes/u,
+    resolve,
+    /workflow-run mode requires its triggering workflow run/u,
   );
-  assert.match(
-    step("Resolve benchmark source run").run,
-    /workflow-run publishing is limited to pull request runs/u,
-  );
+  assert.match(resolve, /current-run publishing is limited to pushes/u);
 
   const direct = benchmarkWorkflow.jobs.publish;
   assert.equal(direct.needs, "benchmark");
@@ -59,19 +74,63 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
 
   const trusted = commentWorkflow.jobs.publish;
   assert.match(trusted.if, /workflow_run\.event == 'pull_request'/u);
-  assert.equal(commentWorkflow.permissions.contents, "read");
+  assert.equal(commentWorkflow.permissions.contents, "write");
 });
 
-test("pull request reports do not persist Pages data", () => {
+test("trusted publishers persist main and pull request Pages data", () => {
   // Deliberately pin the security-critical shell gate. A change to this line
   // requires reviewing the persistence policy, not merely updating a fixture.
   assert.match(
     step("Classify source series").run,
-    /publish=false\s+\[\[ "\$kind" != main \]\] \|\| publish=true/u,
+    /publish="\$same_repository"\s+\[\[ "\$kind" != pull \]\] \|\| publish=true/u,
   );
   assert.match(
     step("Render benchmark history").with["site-base-url"],
-    /source\.outputs\.publish == 'true'/u,
+    /data-access\.outputs\.publish-allowed == 'true'/u,
+  );
+});
+
+test("non-main writes require the trusted default-branch configuration", () => {
+  const checkout = step("Check out trusted non-main configuration");
+  assert.match(checkout.if, /source\.outputs\.kind != 'main'/u);
+  assert.equal(
+    checkout.with.ref,
+    "${{ github.event.repository.default_branch }}",
+  );
+  const access = step("Check benchmark data write access").run;
+  assert.match(access, /SERIES_KIND.*!= main.*TRUSTED_CONFIG.*!= true/su);
+  assert.match(
+    step("Render benchmark history").with["trusted-config"],
+    /trusted-config\.outputs\.available == 'true'/u,
+  );
+  const common = {
+    DATA_TOKEN: "",
+    PUBLISH: "true",
+    SAME_DATA_REPOSITORY: "true",
+  };
+  assert.deepEqual(
+    runShellStep("Check benchmark data write access", {
+      ...common,
+      SERIES_KIND: "pull",
+      TRUSTED_CONFIG: "false",
+    }),
+    { "publish-allowed": "false", writable: "false" },
+  );
+  assert.deepEqual(
+    runShellStep("Check benchmark data write access", {
+      ...common,
+      SERIES_KIND: "branch",
+      TRUSTED_CONFIG: "true",
+    }),
+    { "publish-allowed": "true", writable: "true" },
+  );
+  assert.deepEqual(
+    runShellStep("Check benchmark data write access", {
+      ...common,
+      SERIES_KIND: "main",
+      TRUSTED_CONFIG: "",
+    }),
+    { "publish-allowed": "true", writable: "true" },
   );
 });
 
@@ -111,7 +170,7 @@ test("data publishing failures degrade to a commented preview", () => {
 test("benchmark validation and rendering remain hard failures", () => {
   for (const name of [
     "Download platform artifacts",
-    "Check out trusted benchmark configuration for fork",
+    "Check out trusted non-main configuration",
     "Render benchmark history",
     "Upload rendered preview",
     "Create or update PR comment",
