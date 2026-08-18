@@ -79,7 +79,7 @@ jobs:
       contents: write
     uses: xgo-dev/setup-benchmark-go-action/.github/workflows/publish.yml@v1
     with:
-      run_id: ${{ github.run_id }}
+      run_id: ${{ fromJSON(github.run_id) }}
       source_mode: current-run
 ```
 

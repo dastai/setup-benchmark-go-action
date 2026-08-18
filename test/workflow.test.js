@@ -64,6 +64,7 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
 
   const direct = benchmarkWorkflow.jobs.publish;
   assert.equal(direct.needs, "benchmark");
+  assert.equal(direct.with.run_id, "${{ fromJSON(github.run_id) }}");
   assert.equal(direct.with.source_mode, "current-run");
   assert.match(direct.if, /github\.event_name == 'push'/u);
   assert.match(direct.if, /github\.event\.repository\.default_branch/u);

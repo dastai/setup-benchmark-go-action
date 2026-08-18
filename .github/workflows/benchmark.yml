@@ -42,5 +42,5 @@ jobs:
       contents: write
     uses: ./.github/workflows/publish.yml
     with:
-      run_id: ${{ github.run_id }}
+      run_id: ${{ fromJSON(github.run_id) }}
       source_mode: current-run
