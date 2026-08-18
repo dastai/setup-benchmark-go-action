@@ -114,6 +114,7 @@ function runRecord(args, runtime = {}) {
     "baseline-repository": true,
     "baseline-sha": true,
     "baseline-ref": true,
+    "sample-pairing": true,
     "output-dir": true,
     "platform-id": true,
     "platform-label": true,
@@ -161,6 +162,9 @@ function runRecord(args, runtime = {}) {
     schemaVersion,
     suiteId: config.id,
     shardId,
+    ...(values["sample-pairing"]
+      ? { samplePairing: values["sample-pairing"] }
+      : {}),
     source: {
       repository,
       sha,
@@ -194,6 +198,9 @@ function runRecord(args, runtime = {}) {
       schemaVersion,
       suiteId: config.id,
       shardId,
+      ...(values["sample-pairing"]
+        ? { samplePairing: values["sample-pairing"] }
+        : {}),
       source: {
         repository: baselineRepository,
         sha: baselineSHA,

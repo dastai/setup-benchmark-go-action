@@ -500,7 +500,7 @@ test("renders selected measurements as generic pivot and collapsed tables", () =
   );
   assert.match(
     body,
-    /\| Linux \| cprintf \| 18264 B \| \+1\.5% \(worse\) \| 354\.926 ms \| -11\.3% \(better\) \| 1\.274 ms \| \+27\.4% \(worse\) \|/u,
+    /\| Linux \| cprintf \| 18264 B \| \+264 B \/ \+1\.5% \(worse\) \| 354\.926 ms \| -45\.07 ms \/ -11\.3% \(better\) \| 1\.274 ms \| \+274 us \/ \+27\.4% \(worse\) \|/u,
   );
   assert.match(body, /<summary>Core language benchmarks<\/summary>/u);
   assert.match(body, /\| macOS \| BenchmarkDirectCall \| 0\.900 ns\/op/u);
