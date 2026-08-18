@@ -95,7 +95,10 @@ jobs:
             jq -r '.head_repository.full_name // .repository.full_name // ""' <<<"$run_json"
           )"
           head_sha="$(jq -r '.head_sha // ""' <<<"$run_json")"
-          if [[ "$SOURCE_MODE" == current-run ]] &&
+          if [[ "$SOURCE_MODE" == workflow-run ]] && [[ "$run_event" != pull_request ]]; then
+            echo "workflow-run publishing is limited to pull request runs" >&2
+            exit 1
+          elif [[ "$SOURCE_MODE" == current-run ]] &&
             { [[ "$run_event" != push ]] || [[ "$head_branch" != "$DEFAULT_BRANCH" ]]; }; then
             echo "current-run publishing is limited to pushes on $DEFAULT_BRANCH" >&2
             exit 1

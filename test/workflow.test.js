@@ -42,6 +42,10 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
     step("Resolve benchmark source run").run,
     /current-run publishing is limited to pushes/u,
   );
+  assert.match(
+    step("Resolve benchmark source run").run,
+    /workflow-run publishing is limited to pull request runs/u,
+  );
 
   const direct = benchmarkWorkflow.jobs.publish;
   assert.equal(direct.needs, "benchmark");
