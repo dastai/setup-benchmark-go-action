@@ -51,7 +51,7 @@ function entry(value) {
   };
 }
 
-test("reports absolute and percentage changes from index-paired samples", () => {
+test("reports signed and percentage changes from index-paired samples", () => {
   assert.equal(formatPreciseNumber(0.0004), "0.0004");
   assert.equal(formatPreciseNumber(0.000000001), "1e-9");
   assert.equal(formatPreciseNumber(12.3456), "12.35");
@@ -72,7 +72,10 @@ test("reports absolute and percentage changes from index-paired samples", () => 
   writeReport(pairedReport, "", config, head, base, { sameRunner: true });
   const paired = fs.readFileSync(pairedReport, "utf8");
   assert.match(paired, /\| 18 \| \+1 ns\/op \/ \+10\.0% \(worse\) \|/u);
-  assert.match(paired, /absolute and percentage changes are pairwise medians/u);
+  assert.match(
+    paired,
+    /signed differences and percentage changes are pairwise medians/u,
+  );
 
   const summaryReport = path.join(root, "summary.md");
   writeReport(summaryReport, "", config, head, base);
