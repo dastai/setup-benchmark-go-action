@@ -55,6 +55,7 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
   const input = workflow.on.workflow_call.inputs.source_mode;
   assert.equal(input.default, "workflow-run");
   assert.equal(input.type, "string");
+  assert.equal(workflow.permissions, undefined);
   const resolve = step("Resolve benchmark source run").run;
   assert.match(
     resolve,

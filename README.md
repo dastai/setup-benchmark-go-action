@@ -530,7 +530,8 @@ Call
 Recommended publisher permissions are `actions: read`, `contents: write`,
 `issues: write`, and `pull-requests: write`. A direct main-only publisher does
 not need the issue or pull request permissions. GitHub may reduce permissions
-passed to a reusable workflow, so the caller must grant them.
+passed to a reusable workflow, so the publisher inherits only the permissions
+explicitly granted by its caller.
 
 ## Runtime And Security
 

@@ -40,12 +40,6 @@ on:
         description: Token with contents write access when data_repository is external.
         required: false
 
-permissions:
-  actions: read
-  contents: write
-  issues: write
-  pull-requests: write
-
 concurrency:
   group: go-benchmark-data-${{ inputs.data_repository || github.repository }}
   cancel-in-progress: false
