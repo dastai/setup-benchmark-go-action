@@ -142,6 +142,11 @@ test("publisher resolves stale fork runs without trusting the current head", () 
   );
   assert.match(classify, /\.base\.repo\.full_name == env\.GITHUB_REPOSITORY/u);
   assert.match(classify, /invalid benchmark data repository/u);
+  assert.match(step("Commit benchmark data").run, /current_state.*!= open/su);
+  assert.match(
+    step("Create or update PR comment").with.script,
+    /pull\.data\.state !== "open"/u,
+  );
 });
 
 test("data publishing failures degrade to a commented preview", () => {

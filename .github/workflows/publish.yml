@@ -393,16 +393,6 @@ jobs:
           SOURCE_SHA: ${{ steps.source-run.outputs.sha }}
         run: |
           set -euo pipefail
-          if [[ "$SERIES_KIND" == pull ]]; then
-            current_head="$(
-              gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .head.sha
-            )"
-            if [[ "$current_head" != "$SOURCE_SHA" ]]; then
-              echo "skip stale benchmark data for $SOURCE_SHA; pull request is at $current_head"
-              echo "ready=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add --all
@@ -411,6 +401,16 @@ jobs:
             exit 0
           fi
           git commit -m "benchmarks: update ${SOURCE_SHA:0:12}"
+          if [[ "$SERIES_KIND" == pull ]]; then
+            pull_json="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+            current_head="$(jq -r .head.sha <<<"$pull_json")"
+            current_state="$(jq -r .state <<<"$pull_json")"
+            if [[ "$current_state" != open || "$current_head" != "$SOURCE_SHA" ]]; then
+              echo "skip stale benchmark data for $SOURCE_SHA; pull request is $current_state at $current_head"
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
           git push origin "HEAD:$DATA_BRANCH"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
@@ -544,10 +544,13 @@ jobs:
               repo: context.repo.repo,
               pull_number: issue_number,
             });
-            if (pull.data.head.sha !== process.env.SOURCE_SHA) {
+            if (
+              pull.data.state !== "open" ||
+              pull.data.head.sha !== process.env.SOURCE_SHA
+            ) {
               core.info(
                 `Skip stale benchmark comment for ${process.env.SOURCE_SHA}; ` +
-                `pull request is at ${pull.data.head.sha}.`
+                `pull request is ${pull.data.state} at ${pull.data.head.sha}.`
               );
               return;
             }
