@@ -47,6 +47,11 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
   assert.equal(direct.needs, "benchmark");
   assert.equal(direct.with.source_mode, "current-run");
   assert.match(direct.if, /github\.event_name == 'push'/u);
+  assert.match(direct.if, /github\.event\.repository\.default_branch/u);
+  assert.match(
+    benchmarkWorkflow.jobs.benchmark.if,
+    /github\.event\.repository\.default_branch/u,
+  );
 
   const trusted = commentWorkflow.jobs.publish;
   assert.match(trusted.if, /workflow_run\.event == 'pull_request'/u);
@@ -54,6 +59,8 @@ test("publisher supports trusted workflow-run and current-run sources", () => {
 });
 
 test("pull request reports do not persist Pages data", () => {
+  // Deliberately pin the security-critical shell gate. A change to this line
+  // requires reviewing the persistence policy, not merely updating a fixture.
   assert.match(
     step("Classify source series").run,
     /publish=false\s+\[\[ "\$kind" != main \]\] \|\| publish=true/u,
@@ -62,6 +69,16 @@ test("pull request reports do not persist Pages data", () => {
     step("Render benchmark history").with["site-base-url"],
     /source\.outputs\.publish == 'true'/u,
   );
+});
+
+test("publisher resolves stale fork runs without trusting the current head", () => {
+  const classify = step("Classify source series").run;
+  assert.match(
+    classify,
+    /repos\/\$\{HEAD_REPOSITORY\}\/commits\/\$\{HEAD_SHA\}\/pulls/u,
+  );
+  assert.match(classify, /\.base\.repo\.full_name == env\.GITHUB_REPOSITORY/u);
+  assert.match(classify, /invalid benchmark data repository/u);
 });
 
 test("data publishing failures degrade to a commented preview", () => {

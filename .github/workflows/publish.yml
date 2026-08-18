@@ -126,8 +126,13 @@ jobs:
           set -euo pipefail
           data_repository="$CONFIGURED_DATA_REPOSITORY"
           [[ -n "$data_repository" ]] || data_repository="$GITHUB_REPOSITORY"
+          pr_number="${PR_NUMBER:-}"
           if [[ ! "$HEAD_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
             echo "invalid benchmark source repository: ${HEAD_REPOSITORY:-missing}" >&2
+            exit 1
+          fi
+          if [[ ! "$data_repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+            echo "invalid benchmark data repository: ${data_repository:-missing}" >&2
             exit 1
           fi
           if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
@@ -142,9 +147,19 @@ jobs:
           same_repository=false
           [[ "$HEAD_REPOSITORY" != "$GITHUB_REPOSITORY" ]] || same_repository=true
           if [[ "$RUN_EVENT" == pull_request ]]; then
-            if [[ -z "$PR_NUMBER" ]]; then
+            if [[ -z "$pr_number" ]]; then
+              pr_number="$(
+                gh api "repos/${HEAD_REPOSITORY}/commits/${HEAD_SHA}/pulls" \
+                  --jq '[.[] | select(
+                    .base.repo.full_name == env.GITHUB_REPOSITORY and
+                    .head.repo.full_name == env.HEAD_REPOSITORY and
+                    .head.ref == env.HEAD_BRANCH
+                  )][0].number // empty' 2>/dev/null || true
+              )"
+            fi
+            if [[ -z "$pr_number" ]]; then
               head_owner="${HEAD_REPOSITORY%%/*}"
-              PR_NUMBER="$(
+              pr_number="$(
                 gh api --method GET "repos/${GITHUB_REPOSITORY}/pulls" \
                   -f state=open \
                   -f "head=${head_owner}:${HEAD_BRANCH}" \
@@ -155,13 +170,13 @@ jobs:
                   )][0].number // empty'
               )"
             fi
-            if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            if [[ ! "$pr_number" =~ ^[1-9][0-9]*$ ]]; then
               echo "cannot resolve pull request for $HEAD_SHA" >&2
               exit 1
             fi
             kind=pull
-            id="$PR_NUMBER"
-            label="PR #$PR_NUMBER"
+            id="$pr_number"
+            label="PR #$pr_number"
           elif [[ "$RUN_EVENT" == push && "$HEAD_BRANCH" == "$DEFAULT_BRANCH" ]]; then
             kind=main
             id=main
@@ -187,7 +202,7 @@ jobs:
             echo "kind=$kind"
             echo "id=$id"
             echo "label=$label"
-            echo "pr=$PR_NUMBER"
+            echo "pr=$pr_number"
             if [[ "$kind" == pull ]]; then
               echo "additional-kind=branch"
               echo "additional-id=$branch_id"

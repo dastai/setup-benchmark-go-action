@@ -40,7 +40,6 @@ name: Go benchmarks
 
 on:
   push:
-    branches: [main]
   pull_request:
 
 permissions:
@@ -48,6 +47,9 @@ permissions:
 
 jobs:
   benchmark:
+    if: >-
+      github.event_name != 'push' ||
+      github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -62,7 +64,9 @@ jobs:
           benchmark-file: benchmark.txt
 
   publish:
-    if: github.event_name == 'push'
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_name == github.event.repository.default_branch
     needs: benchmark
     permissions:
       actions: read
@@ -436,7 +440,9 @@ The default `pages` branch can live in another repository:
 ```yaml
 jobs:
   publish:
-    if: github.event_name == 'push'
+    if: >-
+      github.event_name == 'push' &&
+      github.ref_name == github.event.repository.default_branch
     needs: benchmark
     uses: xgo-dev/setup-benchmark-go-action/.github/workflows/publish.yml@v1
     with:
@@ -506,6 +512,11 @@ Direct main publishing needs `actions: read` and `contents: write`. Pull request
 comment publishing needs `actions: read`, `contents: read`, `issues: write`, and
 `pull-requests: write`. GitHub may reduce permissions passed to a reusable
 workflow, so the caller must grant them.
+
+`workflow-run` remains available for trusted callers that publish main results
+through a completed workflow, including cross-repository setups. Such callers
+must grant `contents: write`; the recommended split above invokes it only for
+pull requests and grants read/comment permissions.
 
 ## Runtime And Security
 
